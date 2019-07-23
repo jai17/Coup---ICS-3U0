@@ -1,0 +1,159 @@
+import hsa.Console;
+import java.awt.*;       
+import java.io.*;        
+import javax.imageio.*;
+
+/**
+ * Introduction
+ * @Author Jai Prajapati, Nawal Mehta 
+ * @Revised 06/11/2018
+ * Class that handles the introduction of the gaem including a loading screen, collecting player information, displaying rules and a countdown method 
+ * */
+
+public class Introduction{
+  
+  //Inititalise variables 
+  private Player [] playerDeck; //An array of all players in the game
+  private int numPlayers; //stores number of players in the game
+  private String [] playerNames; //An array of all player names
+  static Console introConsole; //Console for the introduction to be displayed on
+  private GamePieces deck; //GamePieces object for all cards and coins 
+  
+  
+  /*
+   * Introduction
+   * Constructor for the Introduction class that stores a Console and GamePieces object provided as parameters 
+   * @param - d - Console - a console for the introduction to run on
+   * @param - deck - GamePieces - an existing GamePieces object for cards and coins
+   * */
+  public Introduction (Console d, GamePieces deck){
+    introConsole = d;
+    this.deck = deck; 
+  }
+  
+  
+  /*
+   * loadingScreen
+   * Method that displays a home screen for the game on the introConsole
+   * */
+  public void loadingScreen (){
+    //Declare an image
+    Image img;
+    //Try catch to access an image at the specified file location
+    try{
+      //initialise the image to the image at the file location
+      img = ImageIO.read(new File("LoadingScreen.jpg"));
+      //scale the image so it fits in the console
+      img = img.getScaledInstance((int)(850), (int)(1200), Image.SCALE_SMOOTH);
+    }
+    catch(IOException e){
+      img=null;
+    }
+    //Draw the image on the console
+    introConsole.drawImage(img, 0, 0, null);
+    //Display a rectangle with the words "Loading..." in it
+    introConsole.drawRect(1300, 500, 300, 100);
+    introConsole.setCursor(25, 200); 
+    introConsole.println("Loading..."); 
+    //Show the loading screen for 5 seconds before moving on
+    countdown(5); 
+    introConsole.setCursor(0, 0); 
+    introConsole.clear(); 
+  }
+  
+  
+  /*
+   * runIntro
+   * Method that runs the introduction and collects information from the players and saves it to variables used for the game
+   * */
+  public void runIntro(){
+    String testValidation; 
+    
+    do {
+      introConsole.print("How many players are playing: ");
+      testValidation = introConsole.readLine(); 
+    } while (!DataValidation.validateNumber(testValidation)); 
+    numPlayers = Integer.parseInt(testValidation);
+    playerNames= new String[numPlayers];
+    playerDeck = new Player [numPlayers];
+    
+    for (int x = 0; x < numPlayers; x++){
+      introConsole.println("What is the name of player " + (x+1)+ ":");
+      playerNames[x] = introConsole.readLine();
+    }
+    
+    for (int i = 0; i < numPlayers; i++){
+      deck.subtractCoins(2); 
+      String cardOneDistributed = deck.distribute(); 
+      String cardTwoDistributed = deck.distribute();  
+      playerDeck[i] = new Player (2, cardOneDistributed, cardTwoDistributed, playerNames[i]); 
+      countdown(4, introConsole, playerDeck[i].getName());
+      Cards.drawCard(cardOneDistributed, introConsole, 100, 100, 2);
+      Cards.drawCard(cardTwoDistributed, introConsole, 300, 300, 2);
+      countdown(3);
+    }
+  }
+  
+  
+  
+  public int getNumPlayers(){
+    return (numPlayers);
+  }
+  
+  
+  public String[] getPlayerNames(){
+    return (playerNames);
+  }
+  
+  
+  public Player[] getPlayerDeck(){
+    return (playerDeck);
+  }
+  
+  
+  public GamePieces getDeck(){
+    return (deck); 
+  }
+  
+  
+  
+  public static void countdown (int seconds, Console c, String player){
+    c.clear(); 
+    c.setCursor(2, 2); 
+    c.println(player + ": Here are your cards, " + "make sure other player's are not looking"); 
+    for (int i = seconds; i > 0; i--){
+      c.setCursor(10, 10); 
+      c.println(i);
+      try{
+        Thread.sleep(1000);
+      }
+      catch (InterruptedException e){
+        Thread.currentThread().interrupt();
+      }
+    }  
+  }
+  
+  
+  
+  public static void countdown (int seconds){ 
+    for (int i = 1; i <= seconds; i++){
+      try{
+        Thread.sleep(1000);
+      }
+      catch (InterruptedException e){
+        Thread.currentThread().interrupt();
+      }
+    }  
+  }
+  
+  
+  public void seeMovelist(Console e){
+    e.println("income");
+    e.println("foreign aid");
+    e.println("coup");
+    e.println("tax");
+    e.println("exchange cards");
+    e.println("assassinate");
+    e.println("steal");
+  }
+}

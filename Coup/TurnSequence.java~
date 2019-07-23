@@ -1,0 +1,374 @@
+import hsa.Console; 
+import java.awt.*; 
+import java.io.*;        
+import javax.imageio.*;
+import java.util.*; 
+
+/**
+ * TurnSequence
+ * @Author Jai Prajapati 
+ * @Revised 06/10/2018
+ * Class that handles the main turn based events based on player input, utilising all other classes as part of the main program
+ * */
+
+public class TurnSequence{
+  
+  static ArrayList <String> commands;
+  
+  public TurnSequence(){
+    
+    commands = new ArrayList<>();
+    
+    commands.add("income");
+    commands.add("foreign aid");
+    commands.add("coup");
+    commands.add("tax");
+    commands.add("steal from");
+    commands.add("exchange cards");
+    commands.add("assassinate"); 
+    
+  }
+  
+  public void onTurn (int playerNumber, Player [] players, GamePieces deck, Console display){
+    display.clear(); 
+    String player1Name;
+    Player player = players[playerNumber - 1]; 
+    String player2Name;
+    Player counterPlayer; 
+    String action = ""; 
+    String counterAction; 
+    int secondPlayer; 
+    boolean mandatoryCoup = false; 
+    
+    display.println("It is now " + player.getName() + "'s turn"); 
+    mandatoryCoup = player.checkMandatoryCoup(); 
+    if (mandatoryCoup){
+      player.mandatoryCoup(display);
+      while (true){
+        display.println(player.getName() + ": Who would you like to coup (insert player's name)"); 
+        player2Name = display.readLine();
+        counterPlayer = findPlayerTwo(players, player2Name); 
+        if (!(counterPlayer.equals(""))){
+          break; 
+        }
+      }
+      player.coup(counterPlayer, deck, display); 
+    } else {
+      boolean validAction = true; 
+      while (validAction){
+        display.println("What action would you like to take");
+        action = display.readLine(); 
+        for(int i = 0; i < commands.size(); i++){
+          if(getSimilarity(commands.get(i), action) < 5){
+            validAction = false; 
+          }
+        }
+      }
+      runAction(action, player, players, deck, display); 
+      //deck.updateBoard(); 
+    }
+  }
+  
+  
+  public static void runAction (String action, Player player, Player [] players, GamePieces deck, Console display){
+    int commandNumber = 0; 
+    String player2Name;
+    Player counterPlayer; 
+    String bluff; 
+    String block;
+    String blockType;     
+    for(int i = 0; i < commands.size(); i++){
+      if(getSimilarity(commands.get(i), action) < 1){
+        commandNumber = i;
+      }
+    }
+    switch (commandNumber){
+      case 0:
+        income(player, deck, display); 
+        break; 
+      case 1:
+        foreignAid(player, players, deck, display); 
+        break; 
+      case 2:
+        coup (player, players, deck, display); 
+        break; 
+      case 3:
+        tax (player, players, deck, display); 
+        break;
+      case 4:
+        steal (player, players, deck, display); 
+        break; 
+      case 5:
+        exchangeCards (player, players, deck, display);
+        break;
+      case 6:
+        assasinate (player, players, deck, display); 
+        break;
+    }      
+  }
+  
+  
+  public static void income (Player player, GamePieces deck, Console display){
+    display.clear(); 
+    display.println(player.getName() + " has incomed 1 coin");
+    player.income(deck);
+  }
+  
+  
+  public static void foreignAid (Player player , Player [] players, GamePieces deck, Console display){
+    String player2Name;
+    Player counterPlayer; 
+    String bluff; 
+    String block;
+    String blockType;
+    
+    display.clear(); 
+    display.println(player.getName() + " wants to foreign aid 2 coins");
+    display.println("Would anyone like to block this action (Y or N)"); 
+    block = display.readLine(); 
+    
+    if (block.equalsIgnoreCase("y")){
+      display.println("Who would like to block this action?");
+      player2Name = display.readLine(); 
+      counterPlayer = findPlayerTwo(players, player2Name); 
+      display.println(player.getName() + ": Would you like to call a bluff on the block (Y or N)"); 
+      bluff = display.readLine();
+      
+      if (bluff.equalsIgnoreCase("y")){
+        if (counterPlayer.hasCard("duke")){
+          counterPlayer.trueBluff(deck, "duke", display);
+          player.revealCard(deck, display); 
+        } else {
+          display.clear(); 
+          display.println(counterPlayer.getName() + " does not have a duke and must reveal a card"); 
+          counterPlayer.revealCard(deck, display);
+          display.clear(); 
+          player.foreignAid(deck); 
+          display.println(player.getName() + " has succesfully foreign aided two coins"); 
+        }
+      } else {
+        display.println(player.getName() + ": Your turn has ended");
+      }
+    } else {
+      player.foreignAid(deck); 
+      display.println(player.getName() + " has succesfully foreign aided two coins");  
+    }
+  }
+  
+  
+  public static void coup (Player player , Player [] players, GamePieces deck, Console display){
+    String player2Name;
+    Player counterPlayer; 
+    String bluff; 
+    String block;
+    String blockType;
+    
+    display.clear(); 
+    String playerToCoup; 
+    display.println(player.getName() + " wants to coup");
+    
+    while (true){
+      display.println(player.getName() + ": Who would you like to coup (insert player's name)"); 
+      player2Name = display.readLine();
+      counterPlayer = findPlayerTwo(players, player2Name); 
+      
+      if (!(counterPlayer.equals(""))){
+        break; 
+      }
+    }
+    player.coup(counterPlayer, deck, display);
+  }
+  
+  
+  public static void tax (Player player , Player [] players, GamePieces deck, Console display){
+    String player2Name;
+    Player counterPlayer; 
+    String bluff; 
+    String block;
+    String blockType;
+    
+    display.clear();
+    display.println(player.getName() + " wants to tax 3 coins");
+    display.println("Would anyone like call a bluff on this action (Y or N)"); 
+    bluff = display.readLine();
+    if (bluff.equalsIgnoreCase("y")){
+      display.println("Who would like to call a bluff on this action?");
+      player2Name = display.readLine();
+      counterPlayer = findPlayerTwo(players, player2Name);
+      if (player.hasCard("duke")){
+        player.trueBluff(deck, "duke", display);
+        counterPlayer.revealCard(deck, display); 
+        Cards.tax(deck, player); 
+        display.println(player.getName() + "has succesfully taxed 3 coins");
+      } else {
+        player.revealCard(deck, display);
+      }
+    } else {
+      Cards.tax(deck, player); 
+      display.println(player.getName() + "has succesfully taxed 3 coins");
+    }
+    
+  }
+  
+  
+  
+  public static void steal (Player player , Player [] players, GamePieces deck, Console display){
+    String player2Name;
+    Player counterPlayer;
+    String bluff;
+    String block;
+    String blockType;
+    
+    display.clear(); 
+    display.println(player.getName() + " would like to steal");
+    display.println("Who would you like to steal from?"); 
+    player2Name = display.readLine();
+    counterPlayer = findPlayerTwo(players, player2Name);
+    display.println(counterPlayer.getName() + ": Would you like to block, call a bluff or accept (block, bluff or accept)"); 
+    block = display.readLine();
+    if (block.equalsIgnoreCase("block")){
+      display.println("Would you like to block with ambassador or captain (C or A)");
+      blockType = display.readLine();
+      display.println(player.getName() + " Would you like to call a bluff (Y or N)");
+      bluff = display.readLine();
+      if (bluff.equalsIgnoreCase("y")){
+        if (blockType.equalsIgnoreCase("c")){
+          if (counterPlayer.hasCard("captain")){
+            counterPlayer.trueBluff(deck, "captain", display);
+            player.revealCard(deck, display); 
+          } else {
+            counterPlayer.revealCard(deck, display); 
+            player.addMoney(2); 
+            counterPlayer.subtractMoney(2);
+            display.println(player.getName() + " has succesfully stolen 2 coins from " + counterPlayer.getName());
+          }
+        } else if (blockType.equalsIgnoreCase("a")){
+          if (counterPlayer.hasCard("ambassador")){
+            counterPlayer.trueBluff(deck, "ambassador", display);
+            player.revealCard(deck, display);
+          } else {
+            counterPlayer.revealCard(deck, display);
+            Cards.steal(player, counterPlayer);
+          }
+        }
+      } else {
+        display.println(player.getName() + "'s turn has ended");
+      }
+    } else if (block.equalsIgnoreCase("bluff")){
+      if (player.hasCard("captain")){
+        player.trueBluff(deck, "captain", display);
+        counterPlayer.revealCard(deck, display);
+        Cards.steal(player, counterPlayer);
+      } else {
+        player.revealCard(deck, display); 
+      }  
+    } else {
+      Cards.steal(player, counterPlayer);
+      
+    }
+    
+  }
+  
+  
+  public static void exchangeCards (Player player , Player [] players, GamePieces deck, Console display){
+    String player2Name;
+    Player counterPlayer; 
+    String bluff; 
+    String block;
+    String blockType;
+    
+    display.clear(); 
+    display.println(player.getName() + " would like to exchange cards with the court deck");
+    display.println("Would anyone like call a bluff on this action (Y or N)"); 
+    bluff = display.readLine();
+    if (bluff.equalsIgnoreCase("y")){
+      display.println("Who would like to call a bluff on this action?");
+      player2Name = display.readLine(); 
+      counterPlayer = findPlayerTwo(players, player2Name);
+      if (player.hasCard("ambassador")){
+        player.trueBluff(deck, "ambassador", display);
+        counterPlayer.revealCard(deck, display);
+        display.println(player.getName() + "'s turn has ended");
+      } else {
+        player.revealCard(deck, display); 
+      }
+    } else {
+      Cards.exchangeCards(deck, player, display);
+      display.println(player.getName() + "has succesfully ambassadored");
+    }
+  }
+  
+  
+  public static void assasinate (Player player , Player [] players, GamePieces deck, Console display){
+    String player2Name;
+    Player counterPlayer;
+    String bluff;
+    String block;
+    String blockType;
+    display.clear();
+    display.println(player.getName() + " would like to assasinate");
+    display.println("Who would you like to assasinate?");
+    player2Name = display.readLine();
+    counterPlayer = findPlayerTwo(players, player2Name);
+    display.println(counterPlayer.getName() + ": Would you like to block with contessa, call a bluff or accept)");
+    block = display.readLine();
+    if (block.equalsIgnoreCase("block")){
+      display.println(player.getName() + " Would you like to call a bluff (Y or N)");
+      bluff = display.readLine();
+      if (bluff.equalsIgnoreCase("y")){
+        if (counterPlayer.hasCard("contessa")){
+          counterPlayer.trueBluff(deck, "contessa", display);
+          player.revealCard(deck, display);
+        } else {
+          counterPlayer.revealCard(deck, display);
+          String assasinateOutput = Cards.assasinate(player, counterPlayer, deck, display);
+          display.println(assasinateOutput);
+        }
+      } else {
+        display.println(player.getName() + "'s turn has ended");
+      }
+    } else if (block.equalsIgnoreCase("bluff")){
+      if (player.hasCard("assassin")){
+        player.trueBluff(deck, "assassin", display);
+        counterPlayer.revealCard(deck, display);
+        String assasinateOuput = Cards.assasinate(player, counterPlayer, deck, display);
+        display.println(assasinateOuput); 
+      } else {
+        player.revealCard(deck, display);
+        display.println(player.getName() + "'s turn has ended");
+      }
+    } else {
+      String assasinateOuput = Cards.assasinate(player, counterPlayer, deck, display);
+      display.println(assasinateOuput);
+    } 
+  }
+  
+  
+  public static Player findPlayerTwo (Player [] players, String playerTwoName){
+    boolean foundPlayer;
+    Player counterPlayer = new Player (0, "", "", "");
+    
+    for (int i = 0; i < players.length; i++){
+      if ((players[i].getName()).equalsIgnoreCase(playerTwoName)){
+        counterPlayer = players[i];
+      }
+    }
+    return counterPlayer; 
+  }
+  
+  
+  public static int getSimilarity(String command, String action) {
+    String s1 = command.toLowerCase();
+    String s2 = action.toLowerCase();
+    int similarity = command.length();
+    
+    for (int i = 0; i < s1.length(); i++){
+      if (i < s2.length()){
+        if ((Character.toString(s1.charAt(i))).equals(Character.toString(s2.charAt(i)))){
+          similarity -=1;
+        }
+      }
+    }
+    return (similarity);
+  }
+}

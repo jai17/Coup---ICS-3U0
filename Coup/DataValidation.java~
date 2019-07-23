@@ -1,0 +1,43 @@
+import java.io.*; 
+
+public class DataValidation {
+  
+  public DataValidation(){
+  }
+  
+  public static boolean validateString (String expectedInput, String userInput){
+    boolean valid = true; 
+    
+    try {
+      if (!(expectedInput.equalsIgnoreCase(userInput))) {
+        throw (new Exception());
+      }           
+    } catch (Exception exe) {   
+      valid = false; 
+    }
+    
+    return (valid); 
+    
+  }
+  
+  public static boolean validateNumber (int expected, String actual){
+    
+    String expectedNumber = Integer.toString(expected); 
+    boolean valid = true; 
+    
+    try {
+      int test = Integer.parseInt
+      
+    }
+    
+    
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+}

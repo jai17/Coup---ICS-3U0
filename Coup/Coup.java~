@@ -1,0 +1,142 @@
+import hsa.Console; 
+
+/**
+ * Coup
+ * @Author Jai Prajapati, Nawal Mehta 
+ * @Revised 06/11/2018
+ * The main class for the game Coup that utilises all other classes and runs the game 
+ * */
+
+public class Coup {
+  
+  //Declare Console variables 
+  static Console boardConsole; //console to draw the board with game objects 
+  static Console displayConsole; //console to handle all user interaction
+  static Console rulesConsole; //console to display rules for the game
+  
+  //Main method
+  public static void main (String [] args){
+    
+    //Declare variables 
+    Introduction intro; //Introduction object to handle game initialization
+    GamePieces deck; //GamePieces object to handle all game pieces and board 
+    Player [] players; //Array of player objects containing each player in the game 
+    TurnSequence gameSequence; //Turn Sequence object to handle each player's turn with counteractions
+    int numPlayers = 0; //int variable to store the number of players in the game
+    String[] playerNames; //String array to store all player names
+    String seeRules; //String to store wether or not the user would like to see the rules 
+    String winner = ""; //String to store the winner's name
+    
+    //Initialize the deck (GamePieces) object 
+    deck = new GamePieces();
+    //Initialize the gameSequence (TurnSequence) object
+    gameSequence = new TurnSequence(); 
+    
+    
+    /***Code to handle the introduction including the display of rules***/
+    
+    //Initialize the console for user input with initial parameters
+    displayConsole = new Console(33, 80, 18, "User Input");
+    //Initialize the intro (Introduction) object with initial parameters of the displayConsole and deck
+    intro = new Introduction(displayConsole, deck);
+    
+    //Start the loading screen
+    intro.loadingScreen(); 
+    
+    //Ask the user if they would like to see the rules, displaying them on the rulesConsole if yes
+    displayConsole.println("Would you like to see the rules (Yes or No)");
+    seeRules = displayConsole.readLine(); 
+    if (seeRules.equalsIgnoreCase("yes")){
+      //Initialize the console to display the rules
+      rulesConsole = new Console (60, 80, 19, "Rules");
+      //Display rules on the rulesConsole
+      intro.seeRules(rulesConsole);
+    }
+    
+    //Start the introduction in order to collect user information
+    intro.runIntro();
+    //Clear the displayConsole 
+    displayConsole.clear();
+    
+    //Save all information collected form the intro (Introduction) class to local variables of this class
+    players = intro.getPlayerDeck(); 
+    deck = intro.getDeck(); 
+    numPlayers = intro.getNumPlayers();
+    playerNames = intro.getPlayerNames(); 
+    
+    
+    //Tell the users that the game is about to start 
+    displayConsole.println("The game will now start...");
+    //Initialise the boardConsole to display the board
+    boardConsole = new Console(33,80, 16, "Board");
+    
+    //Update the board with initial information of the game including players
+    deck.updateBoard(boardConsole, numPlayers, players, playerNames);
+    
+    //While loop to run the game while at least two players still have cards as determined by the gameEnded method 
+    while (gameEnded(players, numPlayers)){
+      //For loop that runs the onTurn method from the gameSequence (TurnSequence object) for each player starting at player 1, then updates the board
+      for (int i = 0; i < numPlayers; i++){
+        if (players[i].getNumberCards() > 0){
+          //Run the turn for the current player's turn
+          gameSequence.onTurn(i+1, players, deck, displayConsole); 
+          //Update the board with the results of the turn
+          deck.updateBoard(boardConsole, numPlayers, players, playerNames);
+        }
+      }
+    }
+    
+    /**Game is over, determine and display the winner**/
+    
+    //Clear the displayConsole
+    displayConsole.clear();
+    //For loop to determine the winner by checking the number of player's each card, the winner is the player with more than 0 cards
+    for (int i = 0; i < numPlayers; i++){ 
+      //Determine if the player in the players array at index i has more than 0 cards
+      if (players[i].getNumberCards() != 0){
+        //Set the winner's name
+        winner = players[i].getName(); 
+      }
+    }
+    //Display the winner on the displayConsole
+    displayConsole.println("The winner of the game is " + winner + "!!!");
+    
+  }//niam
+  
+  
+  /*
+   * gameEnded 
+   * Method that determines wether or not the game has ended by checking if at least two player's in the game still have coins 
+   * @param players - Player[] - existing array of Player objects in the game 
+   * @param numPlayers - int - number of players in the game 
+   * @return - boolean - true or false depending on wether or not the game has ended 
+   */
+  public static boolean gameEnded(Player [] players, int numPlayers){
+    //Declare variables 
+    boolean onePlayer=false; //boolean for if there is one player in the game
+    boolean twoPlayers=false; //boolean for if there are at least two players in the game
+    boolean keepPlaying=false; //boolean to determine wether or not to keep playing, the variable returned 
+    
+    //For loop to determine how many players are still in the game
+    for (int x=0; x<numPlayers; x=x+1){
+      //Check if the current player, x, in the players[] still has cards
+      if ((!(players[x].getCard(1).equalsIgnoreCase("")))||(!(players[x].getCard(2).equalsIgnoreCase("")))){
+        //Set onePlayer to true
+        if (onePlayer==false){
+          onePlayer=true;
+        }
+        //Set twoPlayers to true if there is already onePlayer
+        else if (onePlayer = true){
+          twoPlayers=true;
+        }
+      }
+    }
+    //If there are two players, set keepPlaying to true
+    if (twoPlayers==true){
+      keepPlaying=true;
+    }
+    
+    return (keepPlaying);
+  }//dednEemag
+  
+}//ssalc
