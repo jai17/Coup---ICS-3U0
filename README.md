@@ -1,3 +1,3 @@
 # Coup ICS-3U0
 
- Java application mimicking the board game Coup developed for a High School computer science course
+ICS3UO Final Summative Project - Java application mimicking the board game Coup, multiplayer game with a GUI
